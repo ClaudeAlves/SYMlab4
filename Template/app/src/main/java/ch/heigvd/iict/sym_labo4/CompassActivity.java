@@ -1,5 +1,10 @@
 package ch.heigvd.iict.sym_labo4;
 
+import android.content.Context;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
 import android.opengl.GLSurfaceView;
 import androidx.appcompat.app.AppCompatActivity;
 import android.os.Bundle;
@@ -8,11 +13,21 @@ import android.view.WindowManager;
 
 import ch.heigvd.iict.sym_labo4.gl.OpenGLRenderer;
 
-public class CompassActivity extends AppCompatActivity {
+public class CompassActivity extends AppCompatActivity implements SensorEventListener {
 
     //opengl
     private OpenGLRenderer  opglr           = null;
     private GLSurfaceView   m3DView         = null;
+
+    private SensorManager sensoreManager    = null;
+    private Sensor magnetometreSensor       = null;
+    private Sensor accelerometreSensor      = null;
+
+    private float magnetometreRot[]         = new float[16];
+    private float accelerometreRot[]        = new float[16];
+
+    private float magnetometreVar[]         = new float[3];
+    private float accelerometreVar[]        = new float[3];
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -33,6 +48,35 @@ public class CompassActivity extends AppCompatActivity {
 
         //init opengl surface view
         this.m3DView.setRenderer(this.opglr);
+
+        sensoreManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
+
+        if(sensoreManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER) != null){
+            accelerometreSensor = sensoreManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+            sensoreManager.registerListener(this, accelerometreSensor, sensoreManager.SENSOR_DELAY_NORMAL);
+        }
+
+        if(sensoreManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD) != null){
+            magnetometreSensor = sensoreManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
+            sensoreManager.registerListener(this, magnetometreSensor, sensoreManager.SENSOR_DELAY_NORMAL);
+        }
+    }
+
+    @Override
+    public void onSensorChanged(SensorEvent event) {
+        if(event.sensor.getType() == Sensor.TYPE_ACCELEROMETER){
+            accelerometreVar = event.values;
+        }
+        if(event.sensor.getType() == Sensor.TYPE_MAGNETIC_FIELD){
+            magnetometreVar = event.values;
+        }
+
+        SensorManager.getRotationMatrix(accelerometreRot, null, accelerometreVar, magnetometreVar);
+        magnetometreRot = opglr.swapRotMatrix(accelerometreRot);
+    }
+
+    @Override
+    public void onAccuracyChanged(Sensor sensor, int accuracy) {
 
     }
 
