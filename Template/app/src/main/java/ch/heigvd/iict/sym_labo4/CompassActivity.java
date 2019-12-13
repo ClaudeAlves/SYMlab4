@@ -1,5 +1,9 @@
 package ch.heigvd.iict.sym_labo4;
 
+<<<<<<< HEAD
+=======
+import android.content.Context;
+>>>>>>> 01c4f3d64ba1bbc9642a8bc47c92786a858c0061
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -21,9 +25,21 @@ public class CompassActivity extends AppCompatActivity implements SensorEventLis
     private OpenGLRenderer  opglr           = null;
     private GLSurfaceView   m3DView         = null;
 
+<<<<<<< HEAD
     private float geoMagnet[] = null;
     private float gravity[] = null;
     private float roationMatrix[] = null;
+=======
+    private SensorManager sensoreManager    = null;
+    private Sensor magnetometreSensor       = null;
+    private Sensor accelerometreSensor      = null;
+
+    private float magnetometreRot[]         = new float[16];
+    private float accelerometreRot[]        = new float[16];
+
+    private float magnetometreVar[]         = new float[3];
+    private float accelerometreVar[]        = new float[3];
+>>>>>>> 01c4f3d64ba1bbc9642a8bc47c92786a858c0061
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -49,6 +65,7 @@ public class CompassActivity extends AppCompatActivity implements SensorEventLis
         //init opengl surface view
         this.m3DView.setRenderer(this.opglr);
 
+<<<<<<< HEAD
         mSensorManager = (SensorManager)getSystemService(SENSOR_SERVICE);
         mAccelerometer = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
         mMagneticField = mSensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
@@ -67,6 +84,37 @@ public class CompassActivity extends AppCompatActivity implements SensorEventLis
     }
 
     public void onAccuracyChanged(Sensor sensor, int accuracy) {
+=======
+        sensoreManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
+
+        if(sensoreManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER) != null){
+            accelerometreSensor = sensoreManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+            sensoreManager.registerListener(this, accelerometreSensor, sensoreManager.SENSOR_DELAY_NORMAL);
+        }
+
+        if(sensoreManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD) != null){
+            magnetometreSensor = sensoreManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
+            sensoreManager.registerListener(this, magnetometreSensor, sensoreManager.SENSOR_DELAY_NORMAL);
+        }
+    }
+
+    @Override
+    public void onSensorChanged(SensorEvent event) {
+        if(event.sensor.getType() == Sensor.TYPE_ACCELEROMETER){
+            accelerometreVar = event.values;
+        }
+        if(event.sensor.getType() == Sensor.TYPE_MAGNETIC_FIELD){
+            magnetometreVar = event.values;
+        }
+
+        SensorManager.getRotationMatrix(accelerometreRot, null, accelerometreVar, magnetometreVar);
+        magnetometreRot = opglr.swapRotMatrix(accelerometreRot);
+    }
+
+    @Override
+    public void onAccuracyChanged(Sensor sensor, int accuracy) {
+
+>>>>>>> 01c4f3d64ba1bbc9642a8bc47c92786a858c0061
     }
 
     public void onSensorChanged(SensorEvent event) {
