@@ -13,8 +13,12 @@ import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
+import java.util.Calendar;
+import java.util.UUID;
+
 import no.nordicsemi.android.ble.BleManager;
 import no.nordicsemi.android.ble.BleManagerCallbacks;
+import no.nordicsemi.android.ble.data.Data;
 
 public class BleOperationsViewModel extends AndroidViewModel {
 
@@ -23,11 +27,25 @@ public class BleOperationsViewModel extends AndroidViewModel {
     private MySymBleManager ble = null;
     private BluetoothGatt mConnection = null;
 
+    //UUID
+    private final String timeServiceUUID =  "00001805-0000-1000-8000-00805f9b34fb";
+    private final String symServiceUUID =  "3c0a1000-281d-4b48-b2a7-f15579a1c38f";
+    private final String currentTimeCharUUID = "00002A2B-0000-1000-8000-00805f9b34fb";
+    private final String integerCharUUID = "3c0a1001-281d-4b48-b2a7-f15579a1c38f";
+    private final String temperatureCharUUID = "3c0a1002-281d-4b48-b2a7-f15579a1c38f";
+    private final String buttonClickCharUUID = "3c0a1003-281d-4b48-b2a7-f15579a1c38f";
+
     //live data - observer
     private final MutableLiveData<Boolean> mIsConnected = new MutableLiveData<>();
+    private final MutableLiveData<Float> mTemp= new MutableLiveData<>();
+    private final MutableLiveData<Integer> mClickCount = new MutableLiveData<>();
+    private final MutableLiveData<Calendar> mCalendarDate = new MutableLiveData<>();
     public LiveData<Boolean> isConnected() {
         return mIsConnected;
     }
+    public LiveData<Float> getTemp(){return mTemp;}
+    public LiveData<Integer> getClickCount(){return mClickCount;}
+    public LiveData<Calendar> getDateCalendar(){return mCalendarDate;}
 
     //references to the Services and Characteristics of the SYM Pixl
     private BluetoothGattService timeService = null, symService = null;
@@ -68,6 +86,9 @@ public class BleOperationsViewModel extends AndroidViewModel {
         vous pouvez placer ici les différentes méthodes permettant à l'utilisateur
         d'interagir avec le périphérique depuis l'activité
      */
+    public Calendar convertDataToCalendar(Data date) {
+        return null;
+    }
     public boolean readTemperature() {
         if(!isConnected().getValue() || temperatureChar == null) return false;
         return ble.readTemperature();
@@ -161,7 +182,12 @@ public class BleOperationsViewModel extends AndroidViewModel {
             public boolean isRequiredServiceSupported(@NonNull final BluetoothGatt gatt) {
                 mConnection = gatt; //trick to force disconnection
                 Log.d(TAG, "isRequiredServiceSupported - discovered services:");
-
+                timeService = mConnection.getService(UUID.fromString(timeServiceUUID));
+                symService = mConnection.getService(UUID.fromString(symServiceUUID));
+                currentTimeChar = timeService.getCharacteristic(UUID.fromString(currentTimeCharUUID));
+                integerChar = symService.getCharacteristic(UUID.fromString(integerCharUUID));
+                buttonClickChar = symService.getCharacteristic(UUID.fromString(buttonClickCharUUID));
+                temperatureChar = symService.getCharacteristic(UUID.fromString(temperatureCharUUID));
                 /* TODO
                     - Nous devons vérifier ici que le périphérique auquel on vient de se connecter possède
                       bien tous les services et les caractéristiques attendues, on vérifiera aussi que les
@@ -171,7 +197,9 @@ public class BleOperationsViewModel extends AndroidViewModel {
                  */
 
                 //FIXME si tout est OK, on retourne true, sinon la librairie appelera la méthode onDeviceNotSupported()
-                return false;
+                return timeService != null && symService != null &&
+                        currentTimeChar != null && integerChar != null &&
+                        buttonClickChar != null && temperatureChar != null;
             }
 
             @Override
@@ -182,6 +210,17 @@ public class BleOperationsViewModel extends AndroidViewModel {
                     Dans notre cas il s'agit de s'enregistrer pour recevoir les notifications proposées par certaines
                     caractéristiques, on en profitera aussi pour mettre en place les callbacks correspondants.
                  */
+                enableNotifications(buttonClickChar).enqueue();
+                enableNotifications(currentTimeChar).enqueue();
+
+                setNotificationCallback(buttonClickChar).with((device, data) -> {
+                    mClickCount.setValue(data.getIntValue(Data.FORMAT_UINT8, 0));
+                });
+
+
+                setNotificationCallback(currentTimeChar).with((device, data) -> {
+                    mCalendarDate.setValue(convertDataToCalendar(data));
+                });
             }
 
             @Override
