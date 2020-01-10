@@ -14,6 +14,7 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
 import java.util.Calendar;
+import java.util.Random;
 import java.util.UUID;
 
 import no.nordicsemi.android.ble.BleManager;
@@ -37,13 +38,13 @@ public class BleOperationsViewModel extends AndroidViewModel {
 
     //live data - observer
     private final MutableLiveData<Boolean> mIsConnected = new MutableLiveData<>();
-    private final MutableLiveData<Float> mTemperature = new MutableLiveData<>();
+    private final MutableLiveData<Integer> mTemperature = new MutableLiveData<>();
     private final MutableLiveData<Integer> mClickCount = new MutableLiveData<>();
     private final MutableLiveData<Calendar> mCalendarDate = new MutableLiveData<>();
     public LiveData<Boolean> isConnected() {
         return mIsConnected;
     }
-    public LiveData<Float> getTemperature(){return mTemperature;}
+    public LiveData<Integer> getTemperature(){return mTemperature;}
     public LiveData<Integer> getClickCount(){return mClickCount;}
     public LiveData<Calendar> getDateCalendar(){return mCalendarDate;}
 
@@ -89,7 +90,7 @@ public class BleOperationsViewModel extends AndroidViewModel {
     public Calendar convertDataToCalendar(Data data) {
             Calendar calendar = Calendar.getInstance();
             calendar.set(Calendar.YEAR, data.getIntValue(Data.FORMAT_UINT16, 0));
-            calendar.set(Calendar.MONTH, data.getIntValue(Data.FORMAT_UINT8, 2) - 1);
+            calendar.set(Calendar.MONTH, data.getIntValue(Data.FORMAT_UINT8, 2));
             calendar.set(Calendar.DAY_OF_MONTH, data.getIntValue(Data.FORMAT_UINT8, 3));
             calendar.set(Calendar.HOUR_OF_DAY, data.getIntValue(Data.FORMAT_UINT8, 4));
             calendar.set(Calendar.MINUTE, data.getIntValue(Data.FORMAT_UINT8, 5));
@@ -99,13 +100,17 @@ public class BleOperationsViewModel extends AndroidViewModel {
             return calendar;
 
     }
+    public boolean writeCurrentTime() {
+        if(!isConnected().getValue() || currentTimeChar == null) return false;
+        return ble.writeCurrentTime();
+    }
     public boolean readTemperature() {
-        readCharacteristic(temperatureChar).with((device, data) -> {
-            int temperature = data.getIntValue(Data.FORMAT_UINT16, 0);
-            mTemperature.setValue(temperature);
-        }).enqueue();
-        return true;
+        if(!isConnected().getValue() || temperatureChar == null) return false;
         return ble.readTemperature();
+    }
+    public boolean writeByte(int value) {
+        if(!isConnected().getValue() || integerChar == null) return false;
+        return ble.writeByte(value);
     }
 
     private BleManagerCallbacks bleManagerCallbacks = new BleManagerCallbacks() {
@@ -224,6 +229,7 @@ public class BleOperationsViewModel extends AndroidViewModel {
                     Dans notre cas il s'agit de s'enregistrer pour recevoir les notifications proposées par certaines
                     caractéristiques, on en profitera aussi pour mettre en place les callbacks correspondants.
                  */
+                mClickCount.setValue(0);
                 enableNotifications(buttonClickChar).enqueue();
                 enableNotifications(currentTimeChar).enqueue();
 
@@ -251,12 +257,35 @@ public class BleOperationsViewModel extends AndroidViewModel {
         };
 
         public boolean readTemperature() {
-            /* TODO on peut effectuer ici la lecture de la caractéristique température
-                la valeur récupérée sera envoyée à l'activité en utilisant le mécanisme
-                des MutableLiveData
-                On placera des méthodes similaires pour les autres opérations...
-            */
-            return false; //FIXME
+            readCharacteristic(temperatureChar).with((device, data) -> {
+                int temperature = data.getIntValue(Data.FORMAT_UINT16, 0);
+                mTemperature.setValue(temperature/10);
+            }).enqueue();
+            Toast.makeText(getApplication(), "", Toast.LENGTH_SHORT).show();
+            return true;
+        }
+        public boolean writeCurrentTime( ) {
+            Calendar now = Calendar.getInstance();
+
+            int year = now.get(Calendar.YEAR);
+
+            byte[] currentByteTime = new byte[10];
+            currentByteTime[0] = (byte) (year);
+            currentByteTime[1] = (byte) (year >> 8);
+
+            currentByteTime[2] = (byte) (now.get(Calendar.MONTH) + 1);
+            currentByteTime[3] = (byte) (now.get(Calendar.DAY_OF_MONTH));
+            currentByteTime[4] = (byte) (now.get(Calendar.HOUR_OF_DAY));
+            currentByteTime[5] = (byte) (now.get(Calendar.MINUTE));
+            currentByteTime[6] = (byte) (now.get(Calendar.SECOND));
+            currentByteTime[7] = (byte) (now.get(Calendar.DAY_OF_WEEK));
+
+            writeCharacteristic(currentTimeChar, currentByteTime).enqueue();
+            return true;
+        }
+        public boolean writeByte(int value) {
+            writeCharacteristic(integerChar, Data.from(Integer.toString(value))).enqueue();
+            return true;
         }
     }
 }

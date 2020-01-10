@@ -20,11 +20,6 @@
             android:orientation="vertical" >
 
             <TextView
-                android:id="@+id/secondsIncr"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="secondes incr" />
-            <TextView
                 android:id="@+id/currentTime"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -33,7 +28,7 @@
                 android:id="@+id/getSmartphoneTime"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="get smartphone time" />
+                android:text="sync time with smartphone" />
             <TextView
                 android:id="@+id/buttonPressedNumber"
                 android:layout_width="match_parent"

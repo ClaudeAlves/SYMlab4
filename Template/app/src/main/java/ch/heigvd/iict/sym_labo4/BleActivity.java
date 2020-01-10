@@ -20,6 +20,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.lifecycle.ViewModelProviders;
 
@@ -53,7 +54,6 @@ public class BleActivity extends BaseTemplateActivity {
     private ListView scanResults = null;
     private TextView emptyScanResults = null;
 
-    private TextView secondsIncrText = null;
     private TextView currentTimeText = null;
     private TextView buttonPressedText = null;
     private TextView smartphoneTemperatureText = null;
@@ -93,7 +93,6 @@ public class BleActivity extends BaseTemplateActivity {
         this.scanResults = findViewById(R.id.ble_scanresults);
         this.emptyScanResults = findViewById(R.id.ble_scanresults_empty);
 
-        this.secondsIncrText = findViewById(R.id.secondsIncr);
         this.currentTimeText = findViewById(R.id.currentTime);
         this.buttonPressedText = findViewById(R.id.buttonPressedNumber);
         this.smartphoneTemperatureText = findViewById(R.id.smartphoneTemperature);
@@ -133,7 +132,7 @@ public class BleActivity extends BaseTemplateActivity {
             smartphoneTemperatureText.setText(temperature.toString() + " °C");
         });
         this.bleViewModel.getClickCount().observe(this, (clickCount) -> {
-            buttonPressedText.setText(clickCount);
+            buttonPressedText.setText(bleViewModel.getClickCount().getValue().toString());
         });
         this.bleViewModel.getDateCalendar().observe(this, (calendarDate) -> {
             StringBuilder str = new StringBuilder();
@@ -142,7 +141,33 @@ public class BleActivity extends BaseTemplateActivity {
             str.append(calendarDate.get(Calendar.MINUTE));
             str.append(":");
             str.append(calendarDate.get(Calendar.SECOND));
+            str.append(" | ");
+            str.append(calendarDate.get(Calendar.DAY_OF_MONTH));
+            str.append(".");
+            str.append(calendarDate.get(Calendar.MONTH));
+            str.append(".");
+            str.append(calendarDate.get(Calendar.YEAR));
             currentTimeText.setText(str.toString());
+        });
+
+        // button events
+        temperatureButton.setOnClickListener((view)-> {
+            bleViewModel.readTemperature();
+
+        });
+
+        smartphoneTimeButton.setOnClickListener((view) -> {
+            bleViewModel.writeCurrentTime();
+        });
+
+        bytesToSendButton.setOnClickListener((view) -> {
+            try {
+                bleViewModel.writeByte(Integer.parseInt(bytesToSendText.getText().toString()));
+            } catch (Exception e) {
+                Toast.makeText(getApplication(), "wrong entry", Toast.LENGTH_SHORT).show();
+            }
+            bytesToSendText.getText().clear();
+
         });
     }
 
