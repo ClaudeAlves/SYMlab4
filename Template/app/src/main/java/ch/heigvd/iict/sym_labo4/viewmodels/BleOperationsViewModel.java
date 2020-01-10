@@ -37,13 +37,13 @@ public class BleOperationsViewModel extends AndroidViewModel {
 
     //live data - observer
     private final MutableLiveData<Boolean> mIsConnected = new MutableLiveData<>();
-    private final MutableLiveData<Float> mTemp= new MutableLiveData<>();
+    private final MutableLiveData<Float> mTemperature = new MutableLiveData<>();
     private final MutableLiveData<Integer> mClickCount = new MutableLiveData<>();
     private final MutableLiveData<Calendar> mCalendarDate = new MutableLiveData<>();
     public LiveData<Boolean> isConnected() {
         return mIsConnected;
     }
-    public LiveData<Float> getTemp(){return mTemp;}
+    public LiveData<Float> getTemperature(){return mTemperature;}
     public LiveData<Integer> getClickCount(){return mClickCount;}
     public LiveData<Calendar> getDateCalendar(){return mCalendarDate;}
 
@@ -86,11 +86,25 @@ public class BleOperationsViewModel extends AndroidViewModel {
         vous pouvez placer ici les différentes méthodes permettant à l'utilisateur
         d'interagir avec le périphérique depuis l'activité
      */
-    public Calendar convertDataToCalendar(Data date) {
-        return null;
+    public Calendar convertDataToCalendar(Data data) {
+            Calendar calendar = Calendar.getInstance();
+            calendar.set(Calendar.YEAR, data.getIntValue(Data.FORMAT_UINT16, 0));
+            calendar.set(Calendar.MONTH, data.getIntValue(Data.FORMAT_UINT8, 2) - 1);
+            calendar.set(Calendar.DAY_OF_MONTH, data.getIntValue(Data.FORMAT_UINT8, 3));
+            calendar.set(Calendar.HOUR_OF_DAY, data.getIntValue(Data.FORMAT_UINT8, 4));
+            calendar.set(Calendar.MINUTE, data.getIntValue(Data.FORMAT_UINT8, 5));
+            calendar.set(Calendar.SECOND, data.getIntValue(Data.FORMAT_UINT8, 6));
+            calendar.set(Calendar.DAY_OF_WEEK, data.getIntValue(Data.FORMAT_UINT8, 7));
+
+            return calendar;
+
     }
     public boolean readTemperature() {
-        if(!isConnected().getValue() || temperatureChar == null) return false;
+        readCharacteristic(temperatureChar).with((device, data) -> {
+            int temperature = data.getIntValue(Data.FORMAT_UINT16, 0);
+            mTemperature.setValue(temperature);
+        }).enqueue();
+        return true;
         return ble.readTemperature();
     }
 
@@ -217,10 +231,10 @@ public class BleOperationsViewModel extends AndroidViewModel {
                     mClickCount.setValue(data.getIntValue(Data.FORMAT_UINT8, 0));
                 });
 
-
                 setNotificationCallback(currentTimeChar).with((device, data) -> {
                     mCalendarDate.setValue(convertDataToCalendar(data));
                 });
+
             }
 
             @Override

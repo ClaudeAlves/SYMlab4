@@ -16,15 +16,15 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
-import android.widget.LinearLayout;
+import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ListView;
-import android.widget.RelativeLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.lifecycle.ViewModelProviders;
 
 import java.util.ArrayList;
+import java.util.Calendar;
 
 import ch.heigvd.iict.sym_labo4.abstractactivies.BaseTemplateActivity;
 import ch.heigvd.iict.sym_labo4.adapters.ResultsAdapter;
@@ -52,6 +52,18 @@ public class BleActivity extends BaseTemplateActivity {
 
     private ListView scanResults = null;
     private TextView emptyScanResults = null;
+
+    private TextView secondsIncrText = null;
+    private TextView currentTimeText = null;
+    private TextView buttonPressedText = null;
+    private TextView smartphoneTemperatureText = null;
+
+    private EditText bytesToSendText = null;
+
+    private Button smartphoneTimeButton = null;
+    private Button bytesToSendButton = null;
+    private Button temperatureButton = null;
+
 
     //menu elements
     private MenuItem scanMenuBtn = null;
@@ -81,6 +93,17 @@ public class BleActivity extends BaseTemplateActivity {
         this.scanResults = findViewById(R.id.ble_scanresults);
         this.emptyScanResults = findViewById(R.id.ble_scanresults_empty);
 
+        this.secondsIncrText = findViewById(R.id.secondsIncr);
+        this.currentTimeText = findViewById(R.id.currentTime);
+        this.buttonPressedText = findViewById(R.id.buttonPressedNumber);
+        this.smartphoneTemperatureText = findViewById(R.id.smartphoneTemperature);
+
+        this.bytesToSendText = findViewById(R.id.bytesToSend);
+
+        this.smartphoneTimeButton = findViewById(R.id.getSmartphoneTime);
+        this.bytesToSendButton = findViewById(R.id.bytesToSendButton);
+        this.temperatureButton = findViewById(R.id.smartphoneTemperatureButton);
+
         //manage scanned item
         this.scanResultsAdapter = new ResultsAdapter(this);
         this.scanResults.setAdapter(this.scanResultsAdapter);
@@ -104,6 +127,22 @@ public class BleActivity extends BaseTemplateActivity {
         //ble events
         this.bleViewModel.isConnected().observe(this, (isConnected) -> {
             updateGui();
+        });
+
+        this.bleViewModel.getTemperature().observe(this, (temperature) -> {
+            smartphoneTemperatureText.setText(temperature.toString() + " °C");
+        });
+        this.bleViewModel.getClickCount().observe(this, (clickCount) -> {
+            buttonPressedText.setText(clickCount);
+        });
+        this.bleViewModel.getDateCalendar().observe(this, (calendarDate) -> {
+            StringBuilder str = new StringBuilder();
+            str.append(calendarDate.get(Calendar.HOUR_OF_DAY));
+            str.append(":");
+            str.append(calendarDate.get(Calendar.MINUTE));
+            str.append(":");
+            str.append(calendarDate.get(Calendar.SECOND));
+            currentTimeText.setText(str.toString());
         });
     }
 

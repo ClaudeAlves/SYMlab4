@@ -23,12 +23,12 @@
                 android:id="@+id/secondsIncr"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="test" />
+                android:text="secondes incr" />
             <TextView
                 android:id="@+id/currentTime"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="test2"/>
+                android:text="current time"/>
             <Button
                 android:id="@+id/getSmartphoneTime"
                 android:layout_width="match_parent"
@@ -38,12 +38,12 @@
                 android:id="@+id/buttonPressedNumber"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content" />
-            <TextView
+            <EditText
                 android:id="@+id/bytesToSend"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content" />
             <Button
-                android:id="@+id/bytesToSendButton2"
+                android:id="@+id/bytesToSendButton"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="send bytes" />
@@ -56,14 +56,6 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="get temperature" />
-
-
-
-
-
-
-
-
             <!-- TODO vous placerez dans ce layout toutes les vues nécessaire aux intéractions avec le périphérique BLE -->
 
         </LinearLayout>
