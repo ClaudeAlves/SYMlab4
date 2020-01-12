@@ -1,3 +1,9 @@
+<!-- Project: Labo4
+ * Created by fabien.dutoit on 09.08.2019
+ * (C) 2019 - HEIG-VD, IICT
+ * Modifications : Benjamin Thomas, Gabriel Arzur Catel Torres, Alves Claude-André
+ * Ajout de toutes les vues nécessaire aux intéractions avec le périphérique BLE-->  
+
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
@@ -51,7 +57,6 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="get temperature" />
-            <!-- TODO vous placerez dans ce layout toutes les vues nécessaire aux intéractions avec le périphérique BLE -->
 
         </LinearLayout>
 
