@@ -14,13 +14,24 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
 import java.util.Calendar;
-import java.util.Random;
 import java.util.UUID;
 
 import no.nordicsemi.android.ble.BleManager;
 import no.nordicsemi.android.ble.BleManagerCallbacks;
 import no.nordicsemi.android.ble.data.Data;
 
+/**
+ * Project: Labo4
+ * Created by fabien.dutoit on 09.08.2019
+ * (C) 2019 - HEIG-VD, IICT
+ * Modifications : Benjamin Thomas, Gabriel Arzur Catel Torres, Alves Claude-André
+ *
+ * Ajout de divers observer (température, nombre de click date du calendrier)
+ * ajout d'une fonction permettant de convertir une date au format Data en format Calendar
+ *          pour une utilisation facilité
+ * ajout de divers fonctions pour les différentes lectures( température, heure, nombre de clicks)
+ *
+ */
 public class BleOperationsViewModel extends AndroidViewModel {
 
     private static final String TAG = BleOperationsViewModel.class.getSimpleName();
@@ -46,7 +57,7 @@ public class BleOperationsViewModel extends AndroidViewModel {
     }
     public LiveData<Integer> getTemperature(){return mTemperature;}
     public LiveData<Integer> getClickCount(){return mClickCount;}
-    public LiveData<Calendar> getDateCalendar(){return mCalendarDate;}
+    public LiveData<Calendar> getCalendarDate(){return mCalendarDate;}
 
     //references to the Services and Characteristics of the SYM Pixl
     private BluetoothGattService timeService = null, symService = null;
@@ -87,6 +98,7 @@ public class BleOperationsViewModel extends AndroidViewModel {
         vous pouvez placer ici les différentes méthodes permettant à l'utilisateur
         d'interagir avec le périphérique depuis l'activité
      */
+    // cette fonction permet de convertir une date dans le format décrit dans la donnée en type Calendar
     public Calendar convertDataToCalendar(Data data) {
             Calendar calendar = Calendar.getInstance();
             calendar.set(Calendar.YEAR, data.getIntValue(Data.FORMAT_UINT16, 0));
@@ -97,7 +109,14 @@ public class BleOperationsViewModel extends AndroidViewModel {
             calendar.set(Calendar.SECOND, data.getIntValue(Data.FORMAT_UINT8, 6));
             calendar.set(Calendar.DAY_OF_WEEK, data.getIntValue(Data.FORMAT_UINT8, 7));
 
-            return calendar;
+        /*
+        Soucis ici le set du jour du mois ne marche pas
+        System.out.println(data.getIntValue(Data.FORMAT_UINT8, 3).toString()); renvoi 12 (dernier test dimanche 12 janvier)
+        System.out.println(calendar.get(Calendar.DAY_OF_MONTH)); renvoi 15 (dernier test dimanche 12 janvier)
+         */
+
+
+        return calendar;
 
     }
     public boolean writeCurrentTime() {
@@ -207,15 +226,6 @@ public class BleOperationsViewModel extends AndroidViewModel {
                 integerChar = symService.getCharacteristic(UUID.fromString(integerCharUUID));
                 buttonClickChar = symService.getCharacteristic(UUID.fromString(buttonClickCharUUID));
                 temperatureChar = symService.getCharacteristic(UUID.fromString(temperatureCharUUID));
-                /* TODO
-                    - Nous devons vérifier ici que le périphérique auquel on vient de se connecter possède
-                      bien tous les services et les caractéristiques attendues, on vérifiera aussi que les
-                      caractéristiques présentent bien les opérations attendues
-                    - On en profitera aussi pour garder les références vers les différents services et
-                      caractéristiques (déclarés en lignes 33 et 34)
-                 */
-
-                //FIXME si tout est OK, on retourne true, sinon la librairie appelera la méthode onDeviceNotSupported()
                 return timeService != null && symService != null &&
                         currentTimeChar != null && integerChar != null &&
                         buttonClickChar != null && temperatureChar != null;
@@ -223,13 +233,8 @@ public class BleOperationsViewModel extends AndroidViewModel {
 
             @Override
             protected void initialize() {
-                /* TODO
-                    Ici nous somme sûr que le périphérique possède bien tous les services et caractéristiques
-                    attendus et que nous y sommes connectés. Nous pouvous effectuer les premiers échanges BLE:
-                    Dans notre cas il s'agit de s'enregistrer pour recevoir les notifications proposées par certaines
-                    caractéristiques, on en profitera aussi pour mettre en place les callbacks correspondants.
-                 */
-                mClickCount.setValue(0);
+                //mise en place des callbacks pour la date et le nombre de clicks
+                // ceux-ci sont mis à jour en permanence
                 enableNotifications(buttonClickChar).enqueue();
                 enableNotifications(currentTimeChar).enqueue();
 
@@ -256,29 +261,33 @@ public class BleOperationsViewModel extends AndroidViewModel {
             }
         };
 
+        // permet la lecture de la température
         public boolean readTemperature() {
             readCharacteristic(temperatureChar).with((device, data) -> {
                 int temperature = data.getIntValue(Data.FORMAT_UINT16, 0);
                 mTemperature.setValue(temperature/10);
             }).enqueue();
-            Toast.makeText(getApplication(), "", Toast.LENGTH_SHORT).show();
             return true;
         }
+        // permet l'écriture de la
         public boolean writeCurrentTime( ) {
             Calendar now = Calendar.getInstance();
 
             int year = now.get(Calendar.YEAR);
 
             byte[] currentByteTime = new byte[10];
+            // année en little endian
             currentByteTime[0] = (byte) (year);
             currentByteTime[1] = (byte) (year >> 8);
-
+            // le format ne correspond pas les mois vont de 0 à 11 il faut donc ajouter 1
+            // pour avoir le nombre du mois comme dans le calendrier Gégorien
             currentByteTime[2] = (byte) (now.get(Calendar.MONTH) + 1);
             currentByteTime[3] = (byte) (now.get(Calendar.DAY_OF_MONTH));
             currentByteTime[4] = (byte) (now.get(Calendar.HOUR_OF_DAY));
             currentByteTime[5] = (byte) (now.get(Calendar.MINUTE));
             currentByteTime[6] = (byte) (now.get(Calendar.SECOND));
             currentByteTime[7] = (byte) (now.get(Calendar.DAY_OF_WEEK));
+
 
             writeCharacteristic(currentTimeChar, currentByteTime).enqueue();
             return true;

@@ -12,6 +12,12 @@ import android.view.WindowManager;
 
 import ch.heigvd.iict.sym_labo4.gl.OpenGLRenderer;
 
+/**
+ * Modifications : Benjamin Thomas, Gabriel Arzur Catel Torres, Alves Claude-André
+ * ajout de la foncitonnalité de boussole avec implémentation de onResume et onPause dans le cas ou
+ * l'on changerai d'application.
+ *
+ */
 
 public class CompassActivity extends AppCompatActivity implements SensorEventListener {
 

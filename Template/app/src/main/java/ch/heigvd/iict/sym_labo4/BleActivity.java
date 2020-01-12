@@ -35,6 +35,14 @@ import ch.heigvd.iict.sym_labo4.viewmodels.BleOperationsViewModel;
  * Project: Labo4
  * Created by fabien.dutoit on 09.08.2019
  * (C) 2019 - HEIG-VD, IICT
+ * Modifications : Benjamin Thomas, Gabriel Arzur Catel Torres, Alves Claude-André
+ *
+ * ajouts d'observer sur certaines données ( température, nombre de click et heure du
+ *          périphérique blutooth)
+ * ajout d'un bouton pour synchroniser l'heure du périphérique avec le smartphone
+ * ajout d'un bouton pour mettre à jour la température
+ * ajout d'un bouton pour envoyer un nombre (contrôle de saisie basique) vers le graph du$
+ *          périphérique blootooth
  */
 
 public class BleActivity extends BaseTemplateActivity {
@@ -127,26 +135,23 @@ public class BleActivity extends BaseTemplateActivity {
         this.bleViewModel.isConnected().observe(this, (isConnected) -> {
             updateGui();
         });
-
+        // observation de la température
         this.bleViewModel.getTemperature().observe(this, (temperature) -> {
-            smartphoneTemperatureText.setText(temperature.toString() + " °C");
+            smartphoneTemperatureText.setText("temperature : " + temperature.toString() + " °C");
         });
+        // observation du nombre de clicks
         this.bleViewModel.getClickCount().observe(this, (clickCount) -> {
-            buttonPressedText.setText(bleViewModel.getClickCount().getValue().toString());
+            buttonPressedText.setText("click count : " + bleViewModel.getClickCount().getValue().toString());
         });
-        this.bleViewModel.getDateCalendar().observe(this, (calendarDate) -> {
+        // observation de l'heure
+        this.bleViewModel.getCalendarDate().observe(this, (calendarDate) -> {
             StringBuilder str = new StringBuilder();
+            str.append("time on BT device : ");
             str.append(calendarDate.get(Calendar.HOUR_OF_DAY));
             str.append(":");
             str.append(calendarDate.get(Calendar.MINUTE));
             str.append(":");
             str.append(calendarDate.get(Calendar.SECOND));
-            str.append(" | ");
-            str.append(calendarDate.get(Calendar.DAY_OF_MONTH));
-            str.append(".");
-            str.append(calendarDate.get(Calendar.MONTH));
-            str.append(".");
-            str.append(calendarDate.get(Calendar.YEAR));
             currentTimeText.setText(str.toString());
         });
 
@@ -160,6 +165,7 @@ public class BleActivity extends BaseTemplateActivity {
             bleViewModel.writeCurrentTime();
         });
 
+        // opération du bouton qui envoi des données pour le graph
         bytesToSendButton.setOnClickListener((view) -> {
             try {
                 bleViewModel.writeByte(Integer.parseInt(bytesToSendText.getText().toString()));
